@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>噜噜的物理闯关</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(160deg, #fdf6ec 0%, #f5e6d3 100%);
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 420px;
+            width: 100%;
+            background: rgba(255, 248, 240, 0.92);
+            border-radius: 40px;
+            padding: 24px 20px 30px;
+            box-shadow: 0 20px 60px rgba(120, 80, 50, 0.20);
+            backdrop-filter: blur(4px);
+            position: relative;
+        }
+
+        /* ===== 入口页 ===== */
+        .gate-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            padding: 10px 0;
+        }
+        .gate-screen.hidden {
+            display: none;
+        }
+
+        .lulu-img {
+            width: 100%;
+            max-width: 200px;
+            height: auto;
+            display: block;
+            border-radius: 24px;
+            box-shadow: 0 8px 24px rgba(120, 80, 50, 0.15);
+            margin: 0 auto;
+        }
+
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #3a2518;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .enter-btn {
+            padding: 16px 48px;
+            background: linear-gradient(135deg, #ff9a56, #ff6b35);
+            color: white;
+            border: none;
+            border-radius: 60px;
+            font-size: 22px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 6px 0 #c94f1e;
+            letter-spacing: 2px;
+            width: 100%;
+            max-width: 260px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .enter-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 1px 0 #c94f1e;
+        }
+
+        /* ===== 教师节祝福弹窗 ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            background: rgba(0, 0, 0, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 999;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal-box {
+            background: white;
+            border-radius: 32px;
+            padding: 32px 24px 28px;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+            animation: popUp 0.35s ease;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.30);
+        }
+        @keyframes popUp {
+            from { transform: scale(0.85) translateY(20px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .modal-box .big-icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .modal-box .modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #3a2518;
+            margin-bottom: 8px;
+        }
+        .modal-box .modal-body {
+            font-size: 20px;
+            line-height: 1.7;
+            color: #4a3a2a;
+            margin-bottom: 20px;
+            padding: 0 4px;
+        }
+        .modal-box .modal-btn {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            border-radius: 60px;
+            padding: 14px 30px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 4px 0 #c94f1e;
+            width: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .modal-box .modal-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #c94f1e;
+        }
+        .modal-box .modal-btn.green {
+            background: #42b983;
+            box-shadow: 0 4px 0 #2d8f62;
+        }
+        .modal-box .modal-btn.green:active {
+            box-shadow: 0 1px 0 #2d8f62;
+        }
+
+        /* ===== 答题页 ===== */
+        .quiz-screen {
+            display: none;
+        }
+        .quiz-screen.active {
+            display: block;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #ffb347;
+        }
+        .quiz-header .title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #3a2518;
+        }
+        .quiz-header .progress-text {
+            font-size: 15px;
+            color: #8a7a6a;
+            font-weight: 600;
+            background: #f0e4d8;
+            padding: 4px 16px;
+            border-radius: 30px;
+        }
+
+        .difficulty-label {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #7a6552;
+            margin-bottom: 10px;
+            background: #f0e4d8;
+            padding: 4px 12px;
+            border-radius: 30px;
+            display: inline-block;
+        }
+        .difficulty-label.easy { background: #d4edda; color: #1e7e34; }
+        .difficulty-label.hard { background: #f8d7da; color: #a71d2a; }
+
+        .progress-dots {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e8ddd0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: #b0957a;
+            transition: 0.3s;
+            border: 2px solid transparent;
+        }
+        .dot.done {
+            background: #42b983;
+            color: white;
+            border-color: #2d8f62;
+        }
+        .dot.active {
+            background: #ffb347;
+            color: #3a2518;
+            border-color: #e07c1f;
+            transform: scale(1.08);
+        }
+        .dot.locked {
+            opacity: 0.4;
+        }
+
+        .question-box {
+            background: #fffcf7;
+            border-radius: 28px;
+            padding: 22px 18px 18px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.04), 0 8px 20px rgba(120,80,50,0.10);
+            margin-bottom: 18px;
+        }
+        .q-text {
+            font-size: 19px;
+            font-weight: 600;
+            color: #3a2518;
+            line-height: 1.6;
+            margin-bottom: 18px;
+            padding-left: 4px;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .option {
+            background: white;
+            border: 2px solid #e8ddd0;
+            border-radius: 60px;
+            padding: 13px 18px;
+            font-size: 17px;
+            color: #3a2518;
+            cursor: pointer;
+            transition: 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .option:active:not(.disabled) {
+            transform: scale(0.97);
+        }
+        .option .letter {
+            background: #f0e4d8;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #5a4a3a;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+        .option.correct {
+            background: #d4edda;
+            border-color: #42b983;
+        }
+        .option.correct .letter {
+            background: #42b983;
+            color: white;
+        }
+        .option.wrong {
+            background: #f8d7da;
+            border-color: #e74c3c;
+        }
+        .option.wrong .letter {
+            background: #e74c3c;
+            color: white;
+        }
+        .option.disabled {
+            cursor: default;
+            opacity: 0.7;
+        }
+
+        .feedback {
+            margin-top: 16px;
+            padding: 14px 16px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 500;
+            background: #f5eee8;
+            min-height: 52px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .feedback .icon { font-size: 24px; }
+        .feedback.success { background: #d5f0e0; color: #0f4a2a; }
+        .feedback.error { background: #fde2e2; color: #7a2a1f; }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            border: none;
+            font-weight: 700;
+            padding: 13px 12px;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.15s;
+            flex: 1;
+            min-width: 80px;
+            font-size: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.10);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.10);
+        }
+        .btn:disabled {
+            opacity: 0.4;
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.10);
+            cursor: default;
+        }
+        .btn-next {
+            background: #0b2a4a;
+            color: white;
+            box-shadow: 0 4px 0 #041a2e;
+        }
+        .btn-prev {
+            background: #b0957a;
+            color: white;
+            box-shadow: 0 4px 0 #7a6552;
+        }
+        .btn-retry {
+            background: #e67e22;
+            color: white;
+            box-shadow: 0 4px 0 #a85f1a;
+        }
+
+        .reset-area {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .reset-btn {
+            background: transparent;
+            border: 2px solid #d5c8b8;
+            color: #7a6552;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .reset-btn:active {
+            background: #f0e4d8;
+        }
+
+        /* ===== 通用 ===== */
+        .hidden {
+            display: none !important;
+        }
+        .text-center {
+            text-align: center;
+        }
+
+        /* ===== 手机窄屏适配 ===== */
+        @media (max-width: 400px) {
+            .container { padding: 16px 14px 20px; }
+            .lulu-img { max-width: 160px; }
+            .welcome-title { font-size: 24px; }
+            .enter-btn { font-size: 19px; padding: 14px 32px; }
+            .q-text { font-size: 17px; }
+            .option { font-size: 15px; padding: 11px 14px; }
+            .btn { font-size: 13px; padding: 11px 8px; min-width: 60px; }
+            .dot { width: 28px; height: 28px; font-size: 11px; }
+            .modal-box .modal-body { font-size: 18px; }
+        }
+
+        @media (max-width: 360px) {
+            .container { padding: 12px 10px 16px; }
+            .lulu-img { max-width: 130px; }
+            .welcome-title { font-size: 20px; }
+            .enter-btn { font-size: 17px; padding: 12px 24px; }
+            .q-text { font-size: 15px; }
+            .option { font-size: 14px; padding: 10px 12px; }
+            .action-row { gap: 6px; }
+            .btn { font-size: 12px; padding: 10px 6px; min-width: 50px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- ========================================= -->
+    <!--  入口页                                   -->
+    <!-- ========================================= -->
+    <div class="gate-screen" id="gateScreen">
+        <img class="lulu-img" src="img/噜噜.jpg" alt="噜噜">
+        <div class="welcome-title">🎈 欢迎来到噜噜的世界</div>
+        <button class="enter-btn" id="enterBtn">小试牛刀</button>
+    </div>
+
+    <!-- ========================================= -->
+    <!--  答题页                                   -->
+    <!-- ========================================= -->
+    <div class="quiz-screen" id="quizScreen">
+        <div class="quiz-header">
+            <span class="title">📚 物理闯关</span>
+            <span class="progress-text" id="progressText">1 / 10</span>
+        </div>
+
+        <div class="text-center">
+            <span class="difficulty-label" id="difficultyLabel">低难度</span>
+        </div>
+
+        <div class="progress-dots" id="progressDots"></div>
+
+        <div class="question-box">
+            <div class="q-text" id="questionText">加载题目…</div>
+            <div class="options" id="optionsContainer"></div>
+            <div class="feedback" id="feedbackArea">
+                <span class="icon">💡</span>
+                <span id="feedbackMsg">选出正确答案吧</span>
+            </div>
+        </div>
+
+        <div class="action-row">
+            <button class="btn btn-prev" id="prevBtn" disabled>⬅ 上一题</button>
+            <button class="btn btn-retry" id="retryBtn" disabled>🔄 重答</button>
+            <button class="btn btn-next" id="nextBtn" disabled>下一题 ➡</button>
+        </div>
+
+        <div class="reset-area">
+            <button class="reset-btn" onclick="resetGame()">🔄 重新闯关</button>
+            <button class="reset-btn" onclick="backToGate()">🚪 返回</button>
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!--  教师节祝福弹窗（入口页自动弹出）          -->
+    <!-- ========================================= -->
+    <div class="modal-overlay" id="teacherModal">
+        <div class="modal-box">
+            <span class="big-icon">🌺</span>
+            <div class="modal-title">🎉 教师节快乐！💐</div>
+            <div class="modal-body">🎉🎉🌺🌷🌹🌸💐</div>
+            <button class="modal-btn" id="teacherBtn">收到祝福 ❤️</button>
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!--  答题完成后的弹窗（问候→祝福→愿望）        -->
+    <!-- ========================================= -->
+    <div class="modal-overlay" id="wishModal">
+        <div class="modal-box">
+            <span class="big-icon" id="wishIcon">🌸</span>
+            <div class="modal-title" id="wishTitle">✨ 祝福送达</div>
+            <div class="modal-body" id="wishBody">愿你健康快乐每一天！</div>
+            <button class="modal-btn green" id="wishBtn">💗 下一条</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ============================================================
+    //  10道物理题（1-5低难度，6-10高难度）
+    // ============================================================
+    const questions = [
+        {
+            question: '1. 下列哪个是力的单位？',
+            options: ['千克 (kg)', '牛顿 (N)', '帕斯卡 (Pa)', '瓦特 (W)'],
+            answer: 1,
+            difficulty: '低'
+        },
+        {
+            question: '2. 光在真空中的传播速度约为？',
+            options: ['340 m/s', '3×10⁸ m/s', '3×10⁶ m/s', '3×10⁵ km/s'],
+            answer: 1,
+            difficulty: '低'
+        },
+        {
+            question: '3. 下列哪个是增大摩擦力的方法？',
+            options: ['减小接触面粗糙程度', '增大压力', '用滚动代替滑动', '使接触面分离'],
+            answer: 1,
+            difficulty: '低'
+        },
+        {
+            question: '4. 下列物态变化中，属于液化的是？',
+            options: ['冰变成水', '水变成水蒸气', '水蒸气变成小水滴', '干冰升华'],
+            answer: 2,
+            difficulty: '低'
+        },
+        {
+            question: '5. 一个物体重50N，放在水平桌面上，支持力大小为？',
+            options: ['0N', '25N', '50N', '100N'],
+            answer: 2,
+            difficulty: '低'
+        },
+        {
+            question: '6. 下列哪个是省力杠杆？',
+            options: ['筷子', '钓鱼竿', '羊角锤', '天平'],
+            answer: 2,
+            difficulty: '高'
+        },
+        {
+            question: '7. 下列哪个是导体？',
+            options: ['橡胶', '塑料', '铜', '玻璃'],
+            answer: 2,
+            difficulty: '高'
+        },
+        {
+            question: '8. 声音在下列哪种介质中传播最快？',
+            options: ['空气', '水', '铁', '真空'],
+            answer: 2,
+            difficulty: '高'
+        },
+        {
+            question: '9. 下列哪个是减小压强的方法？',
+            options: ['增大压力', '减小受力面积', '增大受力面积', '减小压力'],
+            answer: 2,
+            difficulty: '高'
+        },
+        {
+            question: '10. 一个物体做匀速直线运动，其合力为？',
+            options: ['大于0', '等于0', '小于0', '无法确定'],
+            answer: 1,
+            difficulty: '高'
+        }
+    ];
+
+    // ============================================================
+    //  祝福队列（2句问候 + 10条祝福 + 1句愿望）
+    // ============================================================
+    const wishQueue = [
+        { icon: '🌺', title: '🎉 你真棒！', body: '教师节快乐噢 🎉' },
+        { icon: '🌟', title: '✨ 祝福满满', body: '送你十个祝福，愿你福气满满~ 🌺' },
+        { icon: '👁️', title: '眼睛明亮', body: '祝你眼睛清亮润泽，远离干涩疲惫，目之所及皆是美好。' },
+        { icon: '💆', title: '肩颈舒展', body: '祝你肩颈轻松自在，卸下紧绷酸胀，时刻舒展一身轻松。' },
+        { icon: '🍚', title: '脾胃安康', body: '祝你脾胃调和顺遂，三餐有味，吃好喝好消化无忧。' },
+        { icon: '❤️', title: '心安喜乐', body: '祝你心气平和安稳，少焦虑郁结，岁岁从容心安喜乐。' },
+        { icon: '🫁', title: '呼吸通透', body: '祝你呼吸通透舒畅，吐纳自在，周身清爽安然惬意。' },
+        { icon: '🦴', title: '腰背强健', body: '祝你腰背远离酸痛，坐卧俯仰，时时刻刻舒适自在。' },
+        { icon: '🦵', title: '步履轻盈', body: '祝你腿脚强健有力，步履轻盈，随心奔赴诗与远方。' },
+        { icon: '🦷', title: '笑口常开', body: '祝你牙齿坚固完好，咀嚼无忧，日日都能笑口常开。' },
+        { icon: '🧠', title: '神思清明', body: '祝你神思清明通透，告别昏沉劳累，夜夜酣然好眠。' },
+        { icon: '🤲', title: '握住温暖', body: '祝你双手灵活舒展，握住烟火，拥抱细碎温暖时光。' },
+        { icon: '🌟', title: '💫 许个愿吧', body: '你有什么愿望嘛，跟我说一说噢 🌟' }
+    ];
+
+    // ============================================================
+    //  游戏状态
+    // ============================================================
+    let currentQ = 0;
+    let unlocked = 0;
+    let answered = false;
+    let gameFinished = false;
+    let wishIndex = 0;
+
+    // ============================================================
+    //  DOM 引用
+    // ============================================================
+    const gateScreen = document.getElementById('gateScreen');
+    const quizScreen = document.getElementById('quizScreen');
+    const enterBtn = document.getElementById('enterBtn');
+    const teacherModal = document.getElementById('teacherModal');
+    const teacherBtn = document.getElementById('teacherBtn');
+    const progressText = document.getElementById('progressText');
+    const progressDots = document.getElementById('progressDots');
+    const difficultyLabel = document.getElementById('difficultyLabel');
+    const questionText = document.getElementById('questionText');
+    const optionsContainer = document.getElementById('optionsContainer');
+    const feedbackArea = document.getElementById('feedbackArea');
+    const feedbackMsg = document.getElementById('feedbackMsg');
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const retryBtn = document.getElementById('retryBtn');
+    const wishModal = document.getElementById('wishModal');
+    const wishIcon = document.getElementById('wishIcon');
+    const wishTitle = document.getElementById('wishTitle');
+    const wishBody = document.getElementById('wishBody');
+    const wishBtn = document.getElementById('wishBtn');
+
+    // ============================================================
+    //  入口逻辑
+    // ============================================================
+    window.addEventListener('load', function() {
+        teacherModal.classList.add('show');
+    });
+
+    teacherBtn.addEventListener('click', function() {
+        teacherModal.classList.remove('show');
+    });
+
+    teacherModal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            teacherModal.classList.remove('show');
+        }
+    });
+
+    enterBtn.addEventListener('click', function() {
+        gateScreen.classList.add('hidden');
+        quizScreen.classList.add('active');
+        resetGame();
+    });
+
+    function backToGate() {
+        quizScreen.classList.remove('active');
+        gateScreen.classList.remove('hidden');
+    }
+
+    // ============================================================
+    //  渲染进度点
+    // ============================================================
+    function renderDots() {
+        const total = questions.length;
+        let html = '';
+        for (let i = 0; i < total; i++) {
+            let cls = 'dot';
+            if (i < unlocked) cls += ' done';
+            else if (i === unlocked) cls += ' active';
+            else cls += ' locked';
+            if (gameFinished) cls = 'dot done';
+            html += `<div class="${cls}">${i + 1}</div>`;
+        }
+        progressDots.innerHTML = html;
+        progressText.textContent = `${currentQ + 1} / ${total}`;
+    }
+
+    // ============================================================
+    //  渲染题目
+    // ============================================================
+    function renderQuestion() {
+        const q = questions[currentQ];
+        if (!q) return;
+        questionText.textContent = q.question;
+
+        difficultyLabel.textContent = q.difficulty === '低' ? '🌟 低难度' : '🔥 高难度';
+        difficultyLabel.className = 'difficulty-label ' + (q.difficulty === '低' ? 'easy' : 'hard');
+
+        const letters = ['A', 'B', 'C', 'D'];
+        let html = '';
+        q.options.forEach((opt, idx) => {
+            let disabled = answered ? 'disabled' : '';
+            let extraCls = '';
+            if (answered && idx === q.answer) extraCls = 'correct';
+            html += `
+                <div class="option ${extraCls} ${disabled}" data-index="${idx}" onclick="selectOption(${idx})">
+                    <span class="letter">${letters[idx]}</span>
+                    ${opt}
+                </div>
+            `;
+        });
+        optionsContainer.innerHTML = html;
+
+        if (answered) {
+            const selected = window._selectedAnswer;
+            if (selected !== undefined && selected !== q.answer) {
+                const opts = optionsContainer.querySelectorAll('.option');
+                opts.forEach((el, idx) => {
+                    if (idx === selected) el.classList.add('wrong');
+                    if (idx === q.answer) { el.classList.remove('wrong'); el.classList.add('correct'); }
+                });
+            }
+            optionsContainer.querySelectorAll('.option').forEach(el => el.classList.add('disabled'));
+        }
+
+        if (answered) {
+            const isCorrect = (window._selectedAnswer === q.answer);
+            if (isCorrect) {
+                feedbackArea.className = 'feedback success';
+                feedbackArea.querySelector('.icon').textContent = '✅';
+                feedbackMsg.textContent = '🎉 答对啦！继续前进！';
+            } else {
+                feedbackArea.className = 'feedback error';
+                feedbackArea.querySelector('.icon').textContent = '❌';
+                feedbackMsg.textContent = `正确答案是 “${q.options[q.answer]}”`;
+            }
+        } else {
+            feedbackArea.className = 'feedback';
+            feedbackArea.querySelector('.icon').textContent = '💡';
+            feedbackMsg.textContent = '选出正确答案吧';
+        }
+        updateButtons();
+        renderDots();
+    }
+
+    // ============================================================
+    //  选择选项
+    // ============================================================
+    function selectOption(idx) {
+        if (answered || gameFinished || currentQ !== unlocked) return;
+        const q = questions[currentQ];
+        const isCorrect = (idx === q.answer);
+        window._selectedAnswer = idx;
+        answered = true;
+
+        if (isCorrect) {
+            if (currentQ === questions.length - 1) {
+                gameFinished = true;
+                unlocked = questions.length;
+                setTimeout(startWishSequence, 500);
+            } else {
+                unlocked = currentQ + 1;
+            }
+        }
+
+        renderQuestion();
+        renderDots();
+
+        if (gameFinished) {
+            feedbackArea.className = 'feedback success';
+            feedbackArea.querySelector('.icon').textContent = '🏆';
+            feedbackMsg.textContent = '🎊 全部通关！准备接收祝福吧！';
+            updateButtons();
+        }
+    }
+
+    // ============================================================
+    //  祝福序列（2句问候 → 10条祝福 → 1句愿望）
+    // ============================================================
+    function startWishSequence() {
+        wishIndex = 0;
+        showNextWish();
+    }
+
+    function showNextWish() {
+        if (wishIndex >= wishQueue.length) {
+            wishModal.classList.remove('show');
+            return;
+        }
+        const w = wishQueue[wishIndex];
+        wishIcon.textContent = w.icon;
+        wishTitle.textContent = w.title;
+        wishBody.textContent = w.body;
+        wishModal.classList.add('show');
+
+        if (wishIndex === wishQueue.length - 1) {
+            wishBtn.textContent = '💗 全部收到';
+        } else {
+            wishBtn.textContent = '💗 下一条';
+        }
+        wishIndex++;
+    }
+
+    wishBtn.addEventListener('click', function() {
+        wishModal.classList.remove('show');
+        setTimeout(showNextWish, 300);
+    });
+
+    wishModal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            wishModal.classList.remove('show');
+            setTimeout(showNextWish, 300);
+        }
+    });
+
+    // ============================================================
+    //  更新按钮状态
+    // ============================================================
+    function updateButtons() {
+        if (gameFinished) {
+            nextBtn.disabled = true;
+            nextBtn.innerHTML = '🎯 通关';
+            prevBtn.disabled = false;
+        } else if (answered) {
+            const q = questions[currentQ];
+            const isCorrect = (window._selectedAnswer === q.answer);
+            if (isCorrect) {
+                nextBtn.disabled = false;
+                nextBtn.innerHTML = '下一题 ➡';
+            } else {
+                nextBtn.disabled = true;
+                nextBtn.innerHTML = '🔒 答对才能继续';
+            }
+        } else {
+            nextBtn.disabled = true;
+            nextBtn.innerHTML = '🔒 先作答';
+        }
+
+        if (currentQ > 0 && currentQ <= unlocked && !gameFinished) {
+            prevBtn.disabled = false;
+        } else {
+            prevBtn.disabled = true;
+        }
+
+        if (answered && !gameFinished) {
+            const q = questions[currentQ];
+            const isCorrect = (window._selectedAnswer === q.answer);
+            retryBtn.disabled = isCorrect;
+        } else {
+            retryBtn.disabled = true;
+        }
+    }
+
+    // ============================================================
+    //  导航函数
+    // ============================================================
+    function goToNext() {
+        if (gameFinished || nextBtn.disabled) return;
+        const q = questions[currentQ];
+        if (window._selectedAnswer !== q.answer) return;
+        if (currentQ < questions.length - 1) {
+            currentQ++;
+            answered = false;
+            window._selectedAnswer = undefined;
+            if (currentQ > unlocked) unlocked = currentQ;
+            renderQuestion();
+            renderDots();
+            updateButtons();
+        }
+    }
+
+    function goToPrev() {
+        if (gameFinished || currentQ <= 0 || currentQ > unlocked) return;
+        currentQ--;
+        const prevQ = questions[currentQ];
+        answered = true;
+        window._selectedAnswer = prevQ.answer;
+        renderQuestion();
+        renderDots();
+        updateButtons();
+    }
+
+    function retryQuestion() {
+        if (gameFinished || !answered) return;
+        const q = questions[currentQ];
+        if (window._selectedAnswer === q.answer) return;
+        answered = false;
+        window._selectedAnswer = undefined;
+        renderQuestion();
+        renderDots();
+        updateButtons();
+    }
+
+    // ============================================================
+    //  重置游戏
+    // ============================================================
+    function resetGame() {
+        currentQ = 0;
+        unlocked = 0;
+        answered = false;
+        gameFinished = false;
+        window._selectedAnswer = undefined;
+        wishIndex = 0;
+        wishModal.classList.remove('show');
+        renderQuestion();
+        renderDots();
+        updateButtons();
+        feedbackArea.className = 'feedback';
+        feedbackArea.querySelector('.icon').textContent = '💡';
+        feedbackMsg.textContent = '选出正确答案吧';
+    }
+
+    // ============================================================
+    //  绑定事件
+    // ============================================================
+    document.getElementById('nextBtn').addEventListener('click', goToNext);
+    document.getElementById('prevBtn').addEventListener('click', goToPrev);
+    document.getElementById('retryBtn').addEventListener('click', retryQuestion);
+
+    // ============================================================
+    //  初始化
+    // ============================================================
+    quizScreen.classList.remove('active');
+    gateScreen.classList.remove('hidden');
+    resetGame();
+</script>
+
+</body>
+</html>
